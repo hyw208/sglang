@@ -1,0 +1,62 @@
+name: sglang-stack
+
+services:
+  searxng-core:
+    container_name: searxng-core
+    image: docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}
+    restart: always
+    ports:
+      - "8081:8080"
+    env_file: ./searxng/.env
+    volumes:
+      - ./searxng/core-config:/etc/searxng
+      - core-data:/var/cache/searxng
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - searxng-valkey
+    networks:
+      - open_webui_network
+
+  searxng-valkey:
+    container_name: searxng-valkey
+    image: docker.io/valkey/valkey:9-alpine
+    command: valkey-server --save 30 1 --loglevel warning
+    restart: always
+    volumes:
+      - valkey-data:/data
+    networks:
+      - open_webui_network
+
+  open-webui:
+    container_name: open-webui
+    image: ${OPEN_WEBUI_IMAGE:-ghcr.io/open-webui/open-webui:main}
+    restart: unless-stopped
+    ports:
+      - "${OPEN_WEBUI_PORT:-3000}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - ENABLE_WEB_SEARCH=True
+      - WEB_SEARCH_ENGINE=searxng
+      - WEB_SEARCH_RESULT_COUNT=${WEB_SEARCH_RESULT_COUNT:-3}
+      - WEB_SEARCH_CONCURRENT_REQUESTS=${WEB_SEARCH_CONCURRENT_REQUESTS:-1}
+      - BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL=True
+      - BYPASS_WEB_SEARCH_WEB_LOADER=True
+      - SEARXNG_QUERY_URL=http://searxng-core:8080/search?q={query}&format=json
+      - OPENAI_API_BASE_URL=${OPENAI_API_BASE_URL:-http://host.docker.internal:${SGLANG_PORT:-8000}/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-EMPTY}
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    depends_on:
+      - searxng-core
+    networks:
+      - open_webui_network
+
+volumes:
+  core-data:
+  valkey-data:
+
+networks:
+  open_webui_network:
+    driver: bridge

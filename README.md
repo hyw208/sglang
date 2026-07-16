@@ -1,0 +1,131 @@
+# What is it?
+
+This project runs a local Qwen model on SGLang and exposes it in two ways:
+
+- VS Code Copilot BYOK custom endpoint
+- Open WebUI chat interface
+
+It is built for multi-turn coding workflows with tool calling and long context.
+
+## Architecture
+
+- SGLang server: `docker-compose-llm.yml`
+- Open WebUI stack (plus SearXNG): `docker-compose-open-webui.yml`
+- Restart utilities: `scripts/`
+
+## Quick start
+
+1. Copy env templates:
+
+```bash
+cp .env.sglang.example .env.sglang
+cp .env.open-webui.example .env.open-webui
+```
+
+2. Start SGLang:
+
+```bash
+scripts/restart-sglang.sh
+```
+
+3. Start Open WebUI:
+
+```bash
+scripts/restart-open-webui.sh
+```
+
+4. Tail logs if needed:
+
+```bash
+docker logs -f sglang-qwen
+docker logs -f open-webui
+```
+
+## Access methods
+
+### 1) VS Code Copilot BYOK
+
+Use your VS Code `chatLanguageModels.json` custom endpoint config and point URL to:
+
+```text
+http://<SGLANG_HOST_OR_IP>:8000/v1
+```
+
+### 2) Open WebUI
+
+Open:
+
+```text
+http://<OPEN_WEBUI_HOST_OR_IP>:3000
+```
+
+Open WebUI sends model requests to `OPENAI_API_BASE_URL` from `.env.open-webui`.
+
+## Utilities
+
+- Restart only SGLang:
+
+```bash
+scripts/restart-sglang.sh
+```
+
+- Restart only Open WebUI stack:
+
+```bash
+scripts/restart-open-webui.sh
+```
+
+- Restart both:
+
+```bash
+scripts/restart-stack.sh
+```
+
+- Optional actions:
+
+```bash
+scripts/restart-sglang.sh --action up
+scripts/restart-sglang.sh --action down
+scripts/restart-open-webui.sh --action up
+scripts/restart-open-webui.sh --action down
+```
+
+## Run on different boxes
+
+You can split services across machines.
+
+### Pattern A: Same box
+
+- SGLang and Open WebUI run on one host.
+- Keep in `.env.open-webui`:
+
+```env
+OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1
+```
+
+### Pattern B: Different boxes
+
+- Box A runs SGLang.
+- Box B runs Open WebUI.
+- On Box B, set `.env.open-webui`:
+
+```env
+OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1
+```
+
+Make sure Box B can reach Box A on port 8000.
+
+### Remote restart over SSH
+
+Run scripts against another host:
+
+```bash
+scripts/restart-sglang.sh --host user@box-a --remote-dir /path/to/sglang
+scripts/restart-open-webui.sh --host user@box-b --remote-dir /path/to/sglang
+scripts/restart-stack.sh --host user@box-a --remote-dir /path/to/sglang
+```
+
+## Notes
+
+- Keep real IPs and keys out of git. Use placeholders in docs.
+- If you do not use remote OpenAI auth, keep `OPENAI_API_KEY=EMPTY`.

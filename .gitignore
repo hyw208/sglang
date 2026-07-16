@@ -1,0 +1,6 @@
+data/*
+
+# Local runtime env files (keep *.example tracked)
+.env
+.env.*
+!.env.*.example
