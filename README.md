@@ -50,6 +50,7 @@ docker logs -f open-webui
 # 1) Prepare env files
 cp .env.sglang.example .env.sglang
 cp .env.open-webui.example .env.open-webui
+cp searxng/.env.searxng.example searxng/.env
 
 # 2) Keep Open WebUI pointed at local SGLang
 sed -i 's|^OPENAI_API_BASE_URL=.*|OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1|' .env.open-webui
@@ -77,6 +78,7 @@ On Box B (UI host):
 
 ```bash
 cp .env.open-webui.example .env.open-webui
+cp searxng/.env.searxng.example searxng/.env
 sed -i 's|^OPENAI_API_BASE_URL=.*|OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1|' .env.open-webui
 scripts/restart-open-webui.sh --action up
 ```
