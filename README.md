@@ -41,14 +41,79 @@ docker logs -f sglang-qwen
 docker logs -f open-webui
 ```
 
+## Deployment examples
+
+### Example 1: Single machine (SGLang + Open WebUI on one host)
+
+```bash
+# 1) Prepare env files
+cp .env.sglang.example .env.sglang
+cp .env.open-webui.example .env.open-webui
+
+# 2) Keep Open WebUI pointed at local SGLang
+sed -i 's|^OPENAI_API_BASE_URL=.*|OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1|' .env.open-webui
+
+# 3) Start both
+scripts/restart-sglang.sh --action up
+scripts/restart-open-webui.sh --action up
+```
+
+Access:
+
+- Open WebUI: `http://<THIS_HOST_IP>:3000`
+- SGLang API: `http://<THIS_HOST_IP>:8000/v1`
+
+### Example 2: Two machines (Box A = SGLang, Box B = Open WebUI)
+
+On Box A (GPU host):
+
+```bash
+cp .env.sglang.example .env.sglang
+scripts/restart-sglang.sh --action up
+```
+
+On Box B (UI host):
+
+```bash
+cp .env.open-webui.example .env.open-webui
+sed -i 's|^OPENAI_API_BASE_URL=.*|OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1|' .env.open-webui
+scripts/restart-open-webui.sh --action up
+```
+
+Optional remote control from your laptop:
+
+```bash
+scripts/restart-sglang.sh --host user@box-a --remote-dir /path/to/sglang --action restart
+scripts/restart-open-webui.sh --host user@box-b --remote-dir /path/to/sglang --action restart
+```
+
 ## Access methods
 
 ### 1) VS Code Copilot BYOK
 
-Use your VS Code `chatLanguageModels.json` custom endpoint config and point URL to:
+Use this valid `chatLanguageModels.json` content in your VS Code user config:
 
-```text
-http://<SGLANG_HOST_OR_IP>:8000/v1
+```json
+[
+	{
+		"name": "My-Local-LLMs",
+		"vendor": "customendpoint",
+		"apiType": "chat-completions",
+		"apiKey": "NOT-NEEDED",
+		"models": [
+			{
+				"id": "Qwen/Qwen3.6-27B-FP8",
+				"name": "Qwen 3.6 27B FP8",
+				"url": "http://<SGLANG_HOST_OR_IP>:8000/v1/chat/completions",
+				"toolCalling": true,
+				"vision": false,
+				"maxInputTokens": 229376,
+				"maxOutputTokens": 32768,
+				"apiKey": "NOT-NEEDED"
+			}
+		]
+	}
+]
 ```
 
 ### 2) Open WebUI
