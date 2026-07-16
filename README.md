@@ -20,6 +20,7 @@ It is built for multi-turn coding workflows with tool calling and long context.
 ```bash
 cp .env.sglang.example .env.sglang
 cp .env.open-webui.example .env.open-webui
+cp searxng/.env.searxng.example searxng/.env
 ```
 
 2. Start SGLang:
