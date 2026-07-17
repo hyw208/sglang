@@ -10,7 +10,7 @@ services:
     environment:
       - SEARXNG_SETTINGS_PATH=/etc/searxng/settings.yml
     volumes:
-      - ./searxng:/etc/searxng
+      - ./settings.yml:/etc/searxng/settings.yml
       - core-data:/var/cache/searxng
     extra_hosts:
       - "host.docker.internal:host-gateway"
