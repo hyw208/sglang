@@ -9,6 +9,41 @@ It is built for multi-turn coding workflows with tool calling and long context.
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph "Client"
+        A["VS Code Copilot"]
+    end
+
+    subgraph "SGLang (docker-compose-llm.yml)"
+        B["SGLang Server\n(Qwen3.6-27B-FP8)"]
+    end
+
+    subgraph "Open WebUI Stack (docker-compose-open-webui.yml)"
+        C["Open WebUI"]
+        D["SearXNG"]
+        E["Valkey (cache)"]
+    end
+
+    subgraph "External"
+        F["Wikidata / Web Sites"]
+    end
+
+    A -->|"OpenAI API\n/chat/completions"| B
+    C -->|"OpenAI API\n/chat/completions"| B
+    C -->|"Web Search\nGET /search?q=...&format=json"| D
+    D -->|"Cache"| E
+    D -->|"SPARQL / HTTP"| F
+```
+
+| Component | Role |
+|---|---|
+| **VS Code Copilot** | External client, sends chat completions to SGLang |
+| **SGLang Server** | Runs the Qwen model, exposes OpenAI-compatible API on port 8000 |
+| **Open WebUI** | Chat UI, talks to SGLang for LLM calls and SearXNG for web search |
+| **SearXNG** | Self-hosted metasearch engine, queries external sites |
+| **Valkey** | In-memory cache backing SearXNG |
+
 - SGLang server: `docker-compose-llm.yml`
 - Open WebUI stack (plus SearXNG): `docker-compose-open-webui.yml`
 - Restart utilities: `scripts/`
@@ -20,13 +55,13 @@ It is built for multi-turn coding workflows with tool calling and long context.
 2. Start SGLang:
 
 ```bash
-scripts/restart-sglang.sh
+scripts/restart-sglang.sh up
 ```
 
 3. Start Open WebUI:
 
 ```bash
-scripts/restart-open-webui.sh
+scripts/restart-open-webui.sh up
 ```
 
 4. Tail logs if needed:
@@ -41,12 +76,8 @@ docker logs -f open-webui
 ### Example 1: Single machine (SGLang + Open WebUI on one host)
 
 ```bash
-# 1) Keep default OPENAI_API_BASE_URL in docker-compose-open-webui.yml
-#    (already set to http://host.docker.internal:8000/v1)
-
-# 2) Start both
-scripts/restart-sglang.sh --action up
-scripts/restart-open-webui.sh --action up
+# Default OPENAI_API_BASE_URL is already http://host.docker.internal:8000/v1
+scripts/restart-stack.sh up
 ```
 
 Access:
@@ -59,24 +90,15 @@ Access:
 On Box A (GPU host):
 
 ```bash
-scripts/restart-sglang.sh --action up
+scripts/restart-sglang.sh up
 ```
 
 On Box B (UI host):
 
 ```bash
-# 1) Edit docker-compose-open-webui.yml and set:
-#    OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1
-
-# 2) Start Open WebUI stack
-scripts/restart-open-webui.sh --action up
-```
-
-Optional remote control from your laptop:
-
-```bash
-scripts/restart-sglang.sh --host user@box-a --remote-dir /path/to/sglang --action restart
-scripts/restart-open-webui.sh --host user@box-b --remote-dir /path/to/sglang --action restart
+# Edit docker-compose-open-webui.yml and set:
+#   OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1
+scripts/restart-open-webui.sh up
 ```
 
 ## Access methods
