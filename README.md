@@ -15,13 +15,7 @@ It is built for multi-turn coding workflows with tool calling and long context.
 
 ## Quick start
 
-1. Copy env templates:
-
-```bash
-cp .env.sglang.example .env.sglang
-cp .env.open-webui.example .env.open-webui
-cp searxng/.env.searxng.example searxng/.env
-```
+1. Configure `OPENAI_API_BASE_URL` in `docker-compose-open-webui.yml` to point at your SGLang host (default: `http://host.docker.internal:8000/v1` for same-box).
 
 2. Start SGLang:
 
@@ -47,15 +41,10 @@ docker logs -f open-webui
 ### Example 1: Single machine (SGLang + Open WebUI on one host)
 
 ```bash
-# 1) Prepare env files
-cp .env.sglang.example .env.sglang
-cp .env.open-webui.example .env.open-webui
-cp searxng/.env.searxng.example searxng/.env
+# 1) Keep default OPENAI_API_BASE_URL in docker-compose-open-webui.yml
+#    (already set to http://host.docker.internal:8000/v1)
 
-# 2) Keep Open WebUI pointed at local SGLang
-sed -i 's|^OPENAI_API_BASE_URL=.*|OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1|' .env.open-webui
-
-# 3) Start both
+# 2) Start both
 scripts/restart-sglang.sh --action up
 scripts/restart-open-webui.sh --action up
 ```
@@ -70,16 +59,16 @@ Access:
 On Box A (GPU host):
 
 ```bash
-cp .env.sglang.example .env.sglang
 scripts/restart-sglang.sh --action up
 ```
 
 On Box B (UI host):
 
 ```bash
-cp .env.open-webui.example .env.open-webui
-cp searxng/.env.searxng.example searxng/.env
-sed -i 's|^OPENAI_API_BASE_URL=.*|OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1|' .env.open-webui
+# 1) Edit docker-compose-open-webui.yml and set:
+#    OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1
+
+# 2) Start Open WebUI stack
 scripts/restart-open-webui.sh --action up
 ```
 
@@ -127,7 +116,7 @@ Open:
 http://<OPEN_WEBUI_HOST_OR_IP>:3000
 ```
 
-Open WebUI sends model requests to `OPENAI_API_BASE_URL` from `.env.open-webui`.
+Open WebUI sends model requests to `OPENAI_API_BASE_URL`.
 
 ## Utilities
 
@@ -165,7 +154,6 @@ You can split services across machines.
 ### Pattern A: Same box
 
 - SGLang and Open WebUI run on one host.
-- Keep in `.env.open-webui`:
 
 ```env
 OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1
@@ -175,7 +163,6 @@ OPENAI_API_BASE_URL=http://host.docker.internal:8000/v1
 
 - Box A runs SGLang.
 - Box B runs Open WebUI.
-- On Box B, set `.env.open-webui`:
 
 ```env
 OPENAI_API_BASE_URL=http://<BOX_A_IP>:8000/v1

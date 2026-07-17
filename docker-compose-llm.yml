@@ -3,42 +3,42 @@ name: sglang-llm
 services:
   sglang-qwen:
     container_name: sglang-qwen
-    image: ${SGLANG_IMAGE:-lmsysorg/sglang:latest}
+    image: lmsysorg/sglang:latest
     restart: unless-stopped
     network_mode: host
     ipc: host
-    shm_size: "${SGLANG_SHM_SIZE:-32g}"
+    shm_size: "32g"
     volumes:
-      - ${HF_CACHE_DIR:-~/.cache/huggingface}:/root/.cache/huggingface
+      - ~/.cache/huggingface:/root/.cache/huggingface
     command:
       - sglang
       - serve
       - --model-path
-      - ${SGLANG_MODEL_PATH:-Qwen/Qwen3.6-27B-FP8}
+      - Qwen/Qwen3.6-27B-FP8
       - --host
-      - ${SGLANG_HOST:-0.0.0.0}
+      - 0.0.0.0
       - --port
-      - "${SGLANG_PORT:-8000}"
+      - "8000"
       - --mem-fraction-static
-      - "${SGLANG_MEM_FRACTION_STATIC:-0.9}"
+      - "0.9"
       - --cuda-graph-max-bs
-      - "${SGLANG_CUDA_GRAPH_MAX_BS:-8}"
+      - "8"
       - --max-total-tokens
-      - "${SGLANG_MAX_TOTAL_TOKENS:-262144}"
+      - "262144"
       - --context-length
-      - "${SGLANG_CONTEXT_LENGTH:-262144}"
+      - "262144"
       - --chunked-prefill-size
-      - "${SGLANG_CHUNKED_PREFILL_SIZE:-16384}"
+      - "16384"
       - --max-prefill-tokens
-      - "${SGLANG_MAX_PREFILL_TOKENS:-65536}"
+      - "65536"
       - --reasoning-parser
-      - ${SGLANG_REASONING_PARSER:-qwen3}
+      - qwen3
       - --tool-call-parser
-      - ${SGLANG_TOOL_CALL_PARSER:-qwen3_coder}
+      - qwen3_coder
       - --allow-auto-truncate
       - --trust-remote-code
       - --max-running-requests
-      - "${SGLANG_MAX_RUNNING_REQUESTS:-2}"
+      - "2"
     deploy:
       resources:
         reservations:
